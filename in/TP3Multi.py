@@ -41,18 +41,6 @@ MOVE_UP = 'U'
 #                                                                                                                #                                                                                                                #
 ###################################################################################################################################################################################################################################
 
-#type arbre = |Empty
- #            |Node of (arbre*(element,etiquette)*arbre)
-  #        
-#def CreateEmptyTasmin():
-#    return Empty
-#def isEmptyTasmin(arbre):
-#    return arbre == Empty
-#def push(arbre,element,etiquette):
-#    if  
-                                    #
-                                            #Si tous les nœuds parents ont deux nœuds fils, on transforme une feuille de profondeur minimale en parent de ce nouveau nœud
-                                            #Si un nœud parent n’a qu’un seul fils, on lui ajoute comme deuxième fils ce nouveau nœud
 
 
 
@@ -66,8 +54,10 @@ def moveFromLocations (sourceLocation, targetLocation) :
         return MOVE_RIGHT
     elif difference == (0, -1) :
         return MOVE_LEFT
+    elif difference == (0,0) :
+        return "standBy"
     else :
-        raise Exception("Impossible move")                                      # In case of wall we raise an error
+        raise Exception((sourceLocation, targetLocation))                                      # In case of wall we raise an error
 
 
 
@@ -124,9 +114,13 @@ def shortestPath(route,beginningNode,finalNode):
 
 
 
-                
-            
-                
+def closestPieceOfCheese (piecesOfCheese, currentLocation, distances) : 
+    cand = piecesOfCheese[0]
+    for cheese in piecesOfCheese :
+        if distances[cheese] < distances[cand]:
+            cand = cheese
+    return cand
+    
     
     
     
@@ -207,9 +201,21 @@ def shortestPath(route,beginningNode,finalNode):
 
 def preprocessing (mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation, piecesOfCheese, timeAllowed) :
     
-    (route,distances) = dijkstra(mazeMap,playerLocation)
-    global path
-    path = shortestPath(route,playerLocation,piecesOfCheese[0])
+    currentLocation = playerLocation
+    path = []
+    while piecesOfCheese != [] :
+        (route,distances) = dijkstra(mazeMap,currentLocation)
+        cheese = closestPieceOfCheese(piecesOfCheese, currentLocation, distances)
+        print(cheese)
+        path = path + shortestPath(route,currentLocation,cheese)
+        piecesOfCheese.pop(piecesOfCheese.index(cheese))
+        currentLocation = cheese
+     
+    global finalPath
+    finalPath = path    
+    
+        
+    #path = shortestPath(route,playerLocation,piecesOfCheese[index])
 
     
     
@@ -299,9 +305,13 @@ def preprocessing (mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocat
 def turn (mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese, timeAllowed) :
     
     move = 'X'                                                # If the list is empty, the player stands still   
-    if len(path)>1:                                           # If at least one move remain (thus 2 couples)
-        move = moveFromLocations(path[0],path[1])             # We convert the cases to a move understandable by the core
-        path.pop(0)                                           # Then we remove the first coordinates of the path
+    if len(finalPath)>1:
+                                                 # If at least one move remain (thus 2 couples)
+        move = moveFromLocations(finalPath[0],finalPath[1])          # We convert the cases to a move understandable by the core
+        if move == "standBy" :
+            finalPath.pop(0)
+            move = moveFromLocations(finalPath[0],finalPath[1])                                                         
+        finalPath.pop(0)                                           # Then we remove the first coordinates of the path
     return(move)
 
 ###################################################################################################################################################################################################################################
